@@ -17,7 +17,7 @@ ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',s
 
 calculError = comm.ErrorRate('ReceiveDelay', 2*span, 'ComputationDelay', 2*span+2);
 
-eb_n0_dB = 0:10; % rapport signal sur bruit en dB
+eb_n0_dB = 100; % rapport signal sur bruit en dB
 eb_n0 = 10.^(eb_n0_dB/10);
 sig = 1; % variance du signal
 Eg = 1; % energie du filtre
@@ -32,7 +32,7 @@ for foo = 1:length(eb_n0)
     ga.reset()
     d0 = 1;
     r0 = 1;
-    while nbr_err < 100
+    % while nbr_err < 100
         
         %% Emetteur
 
@@ -76,7 +76,7 @@ for foo = 1:length(eb_n0)
         error_cnt = calculError.step( bk, bkr );
         nbr_err = error_cnt(2);
         
-    end
+    % end
     
     TEB(foo) = error_cnt(1)
         
@@ -99,23 +99,28 @@ plot(an, '*');
 title('Constellation de an')
 xlabel('I') 
 ylabel('Q') 
-
+xlim([-1.5 1.5])
+ylim([-1.5 1.5])
 
 figure;
 plot(rn, '*');
 title('Constellation de rn')
 xlabel('I') 
 ylabel('Q') 
+xlim([-1.5 1.5])
+ylim([-1.5 1.5])
 
 figure;
 plot(dn, '*');
 title('Constellation de dn')
 xlabel('I') 
 ylabel('Q') 
+xlim([-1.5 1.5])
+ylim([-1.5 1.5])
 
 % figure;
 % Nfft = 512;
-% pwelch(sl, hanning(Nfft), 0, Nfft, Fe, 'centered')
+% pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered')
 % title('Densité de puissance de sl')
 
 figure('Name', 'évolution du TEB en fonction de Eb/N0 en dB');
