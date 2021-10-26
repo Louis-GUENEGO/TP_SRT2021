@@ -59,12 +59,21 @@ TEB = error_cnt(1)
 
 %constellation(qpsk_mod);
 %constellation(qpsk_demod);
-%figure
-%plot(dn, '*');
+figure
+plot(an, '*');
+title('Constellation de an')
+xlabel('I') 
+ylabel('Q') 
 figure;
-plot(vn, '*');
+plot(rn, '*');
+title('Constellation de rn')
+xlabel('I') 
+ylabel('Q') 
 
-
+figure;
+Nfft = 512;
+pwelch(sl, hanning(Nfft), 0, Nfft, Fe, 'centered')
+title('Densité de puissance de sl')
 
 
 
