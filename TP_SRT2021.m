@@ -10,6 +10,14 @@ Fse = 4; % différence entre le débit symbole et la fréquence d'échantillonage
 Fe = Fse * Ds; % fréquence d'échantillonage
 span = 8; % largeur du filtre
 
+eb_n0_dB = 3; % rapport signal sur bruit en dB
+eb_n0 = 10.^(eb_n0_dB/10);
+sig = 1; % variance du signal
+Eg = 1; % energie du filtre
+
+sigma = sig * Eg / (nb * eb_n0)
+
+
 g = comm.RaisedCosineTransmitFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'OutputSamplesPerSymbol',Fse); % filtre de mise en forme
 ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'InputSamplesPerSymbol',Fse,'DecimationFactor',Fse); % filtre adapte
 
@@ -35,7 +43,11 @@ sl = step(g,dn_se);
 
 %% Canal
 
-sl_in = sl;
+bruit = sqrt(sigma/2)*randn(size(sl)) + sqrt(sigma/2)*randn(size(sl))*i; %bruit
+
+sl_in = sl + bruit;
+
+
 
 %% Recepteur
 
@@ -59,21 +71,23 @@ TEB = error_cnt(1)
 
 %constellation(qpsk_mod);
 %constellation(qpsk_demod);
-figure
-plot(an, '*');
-title('Constellation de an')
-xlabel('I') 
-ylabel('Q') 
+% figure
+% plot(an, '*');
+% title('Constellation de an')
+% xlabel('I') 
+% ylabel('Q') 
+
+
 figure;
 plot(rn, '*');
 title('Constellation de rn')
 xlabel('I') 
 ylabel('Q') 
 
-figure;
-Nfft = 512;
-pwelch(sl, hanning(Nfft), 0, Nfft, Fe, 'centered')
-title('Densité de puissance de sl')
+% figure;
+% Nfft = 512;
+% pwelch(sl, hanning(Nfft), 0, Nfft, Fe, 'centered')
+% title('Densité de puissance de sl')
 
 
 
