@@ -1,4 +1,4 @@
-%% Initialisation
+%% Initialisation 
 clear all;
 close all;
 clc
@@ -9,14 +9,14 @@ Ds = 250e3; % debit symbole
 Fse = 4; % différence entre le débit symbole et la fréquence d'échantillonage
 Fe = Fse * Ds; % fréquence d'échantillonage
 span = 8; % largeur du filtre
-phi = 2*pi/360* 45;
+phi = 0*2*pi/360* 50;
 
 g = comm.RaisedCosineTransmitFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'OutputSamplesPerSymbol',Fse); % filtre de mise en forme
 ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'InputSamplesPerSymbol',Fse,'DecimationFactor',Fse); % filtre adapte
 
-calculError = comm.ErrorRate('ReceiveDelay', 2*span, 'ComputationDelay', 2);
+calculError = comm.ErrorRate('ReceiveDelay', 2*span, 'ComputationDelay', 2*span+2);
 
-eb_n0_dB = 0:1:10; % rapport signal sur bruit en dB
+eb_n0_dB = 0:10; % rapport signal sur bruit en dB
 eb_n0 = 10.^(eb_n0_dB/10);
 sig = 1; % variance du signal
 Eg = 1; % energie du filtre
@@ -27,6 +27,10 @@ sigma = sig * Eg ./ (nb * eb_n0);
 for foo = 1:length(eb_n0)
     nbr_err = 0;
     calculError.reset;
+    g.reset()
+    ga.reset()
+    d0 = 1;
+    r0 = 1;
     while nbr_err < 100
         
         %% Emetteur
@@ -36,11 +40,11 @@ for foo = 1:length(eb_n0)
         an = qpsk_mod.step(bk);
 
         dn = zeros(size(an));
-        dn(1) = an(1);
+        dn(1) = an(1) * d0;
         for n = 2:size(an)
            dn(n) = an(n)*dn(n-1);
         end
-
+        d0 = dn(end);
         dn_se = dn; %upsample(rn_se,Fse);
 
         sl = step(g,dn_se);
@@ -58,11 +62,11 @@ for foo = 1:length(eb_n0)
         rn = rn_se; %downsample(rn_se,Fse);
 
         vn = zeros(size(rn_se));
-        vn(1) = rn_se(1);
+        vn(1) = rn_se(1) * conj(r0);
         for n = 2:size(an)
            vn(n) = rn_se(n) * conj(rn_se(n-1));
         end
-
+        r0 = rn_se(end);
         qpsk_demod = comm.QPSKDemodulator('PhaseOffset',0,'BitOutput',1);
         anr = qpsk_demod.step(vn);
         bkr = anr;
@@ -86,11 +90,13 @@ end
 
 %constellation(qpsk_mod);
 %constellation(qpsk_demod);
-% figure
-% plot(an, '*');
-% title('Constellation de an')
-% xlabel('I') 
-% ylabel('Q') 
+
+
+figure
+plot(an, '*');
+title('Constellation de an')
+xlabel('I') 
+ylabel('Q') 
 
 
 figure;
