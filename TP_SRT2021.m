@@ -9,6 +9,7 @@ Ds = 250e3; % debit symbole
 Fse = 4; % différence entre le débit symbole et la fréquence d'échantillonage
 Fe = Fse * Ds; % fréquence d'échantillonage
 span = 8; % largeur du filtre
+phi = 2*pi/360* 45;
 
 g = comm.RaisedCosineTransmitFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'OutputSamplesPerSymbol',Fse); % filtre de mise en forme
 ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'InputSamplesPerSymbol',Fse,'DecimationFactor',Fse); % filtre adapte
@@ -40,22 +41,21 @@ for foo = 1:length(eb_n0)
            dn(n) = an(n)*dn(n-1);
         end
 
-        dn_se = dn;
+        dn_se = dn; %upsample(rn_se,Fse);
 
         sl = step(g,dn_se);
 
         %% Canal
 
-        bruit = sqrt(sigma(foo)/2)* ( randn(size(sl)) + randn(size(sl)) *1i ) ; %bruit
-
-        sl_in = sl + bruit;
-
-
-
+        h = 1;
+        sl_in = conv(h,sl*exp(1i*phi));
+        bruit = sqrt(sigma(foo)/2)* ( randn(size(sl_in)) + randn(size(sl_in)) *1i ) ; %bruit
+        sl_in = sl_in + bruit;
+        
         %% Recepteur
 
         rn_se = step(ga,sl_in);
-        rn = rn_se; %downsample(rn_se,Fse,4); % pas sur
+        rn = rn_se; %downsample(rn_se,Fse);
 
         vn = zeros(size(rn_se));
         vn(1) = rn_se(1);
