@@ -15,7 +15,7 @@ ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',s
 
 calculError = comm.ErrorRate('ReceiveDelay', 2*span, 'ComputationDelay', 2);
 
-eb_n0_dB = 0:0.5:10; % rapport signal sur bruit en dB
+eb_n0_dB = 0:1:10; % rapport signal sur bruit en dB
 eb_n0 = 10.^(eb_n0_dB/10);
 sig = 1; % variance du signal
 Eg = 1; % energie du filtre
