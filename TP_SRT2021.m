@@ -6,10 +6,11 @@ clc
 k = 8*188; % nombre de bits transmis
 nb = 2; % nombre de bits par symbole
 Ds = 250e3; % debit symbole
-Fse = 4; % différence entre le débit symbole et la fréquence d'échantillonage
+Fse = 8; % différence entre le débit symbole et la fréquence d'échantillonage
 Fe = Fse * Ds; % fréquence d'échantillonage
 span = 8; % largeur du filtre
-phi = 0*2*pi/360* 50;
+phi = 2*pi/360  * 50;
+DeltaF = 0;
 
 g = comm.RaisedCosineTransmitFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'OutputSamplesPerSymbol',Fse); % filtre de mise en forme
 ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'InputSamplesPerSymbol',Fse,'DecimationFactor',Fse); % filtre adapte
@@ -45,30 +46,31 @@ for foo = 1:length(eb_n0)
            dn(n) = an(n)*dn(n-1);
         end
         d0 = dn(end);
-        dn_se = dn; %upsample(rn_se,Fse);
+        dn_se = dn;
 
         sl = step(g,dn_se);
 
         %% Canal
 
         h = 1;
-        sl_in = conv(h,sl*exp(1i*phi));
+        x = (1:size(sl))';
+        Fphi = exp(1i*phi + 1i*2*pi*DeltaF*x/Fe );
+        sl_in = conv(h,sl.*Fphi);
         bruit = sqrt(sigma(foo)/2)* ( randn(size(sl_in)) + randn(size(sl_in)) *1i ) ; %bruit
         sl_in = sl_in + bruit;
         
         %% Recepteur
 
         rn_se = step(ga,sl_in);
-        rn = rn_se; %downsample(rn_se,Fse);
-
-        vn = zeros(size(rn_se));
-        vn(1) = rn_se(1) * conj(r0);
+        rn = rn_se; 
+        dn = zeros(size(rn));
+        dn(1) = rn(1) * conj(r0);
         for n = 2:size(an)
-           vn(n) = rn_se(n) * conj(rn_se(n-1));
+           dn(n) = rn(n) * conj(rn(n-1));
         end
-        r0 = rn_se(end);
+        r0 = rn(end);
         qpsk_demod = comm.QPSKDemodulator('PhaseOffset',0,'BitOutput',1);
-        anr = qpsk_demod.step(vn);
+        anr = qpsk_demod.step(dn);
         bkr = anr;
 
         error_cnt = calculError.step( bk, bkr );
@@ -102,6 +104,12 @@ ylabel('Q')
 figure;
 plot(rn, '*');
 title('Constellation de rn')
+xlabel('I') 
+ylabel('Q') 
+
+figure;
+plot(dn, '*');
+title('Constellation de dn')
 xlabel('I') 
 ylabel('Q') 
 
