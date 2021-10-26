@@ -6,11 +6,13 @@ clc
 k = 8*188; % nombre de bits transmis
 nb = 2; % nombre de bits par symbole
 Ds = 250e3; % debit symbole
+Ts = 1/Ds;
 Fse = 8; % différence entre le débit symbole et la fréquence d'échantillonage
 Fe = Fse * Ds; % fréquence d'échantillonage
+Te = 1/Fe;
 span = 8; % largeur du filtre
-phi = 2*pi/360  * 50;
-DeltaF = 0;
+phi = 2*pi/360  * 0;
+DeltaF = 100000;
 
 g = comm.RaisedCosineTransmitFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'OutputSamplesPerSymbol',Fse); % filtre de mise en forme
 ga = comm.RaisedCosineReceiveFilter('RolloffFactor',0.35,'FilterSpanInSymbols',span,'InputSamplesPerSymbol',Fse,'DecimationFactor',Fse); % filtre adapte
@@ -94,13 +96,13 @@ end
 %constellation(qpsk_demod);
 
 
-figure
-plot(an, '*');
-title('Constellation de an')
-xlabel('I') 
-ylabel('Q') 
-xlim([-1.5 1.5])
-ylim([-1.5 1.5])
+% figure
+% plot(an, '*');
+% title('Constellation de an')
+% xlabel('I') 
+% ylabel('Q') 
+% xlim([-1.5 1.5])
+% ylim([-1.5 1.5])
 
 figure;
 plot(rn, '*');
@@ -110,26 +112,36 @@ ylabel('Q')
 xlim([-1.5 1.5])
 ylim([-1.5 1.5])
 
-figure;
-plot(dn, '*');
-title('Constellation de dn')
-xlabel('I') 
-ylabel('Q') 
-xlim([-1.5 1.5])
-ylim([-1.5 1.5])
-
 % figure;
-% Nfft = 512;
-% pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered')
-% title('Densité de puissance de sl')
+% plot(dn, '*');
+% title('Constellation de dn')
+% xlabel('I') 
+% ylabel('Q') 
+% xlim([-1.5 1.5])
+% ylim([-1.5 1.5])
 
-figure('Name', 'évolution du TEB en fonction de Eb/N0 en dB');
-semilogy(eb_n0_dB, TEB, eb_n0_dB, Pb);
-ylabel('TEB');
-xlabel('Eb/N0 en dB');
-title('évolution du TEB en fonction de Eb/N0 en dB');
-legend({'Simulé', 'théorique'},'Location','southwest');
-grid on
+figure;
+Nfft = 512;
+pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered')
+title('Densité de puissance de sl')
+
+[pw, fpw] = pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered'); % diagramme de welch avec Nfft points et pas de recouvrement entre deux fenetres
+[Ga, f] = ga.freqz(Nfft,'whole',Fe); % 
+figure('Name', 'Périodogramme de Welch et DSP théorique de sl(t)');
+plot(fpw,10*log10(abs(pw)),f-1000000, 10*log10(fftshift(abs(Ga)))-67,'g');
+xlabel('fréquence en Hz');
+ylabel('dB / (rad/sample)');
+legend({'Périodogramme de Welch','DSP théorique'},'Location','southwest');
+title('Périodogramme de Welch et DSP théorique de sl(t)');
+
+
+% figure('Name', 'évolution du TEB en fonction de Eb/N0 en dB');
+% semilogy(eb_n0_dB, TEB, eb_n0_dB, Pb);
+% ylabel('TEB');
+% xlabel('Eb/N0 en dB');
+% title('évolution du TEB en fonction de Eb/N0 en dB');
+% legend({'Simulé', 'théorique'},'Location','southwest');
+% grid on
 
 
 
