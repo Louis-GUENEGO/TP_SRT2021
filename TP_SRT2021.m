@@ -14,8 +14,8 @@ Fe = Fse * Ds; % fréquence d'échantillonage
 Te = 1/Fe;
 span = 8; % largeur du filtre
 phi = 2*pi/360  * 0;
-DeltaF = 0;
-tau = Fe*Ts .* [0.1, 0.2, 0.3,0.33,0.35,0.4];
+DeltaF = 100000;
+tau = 0;%Fe*Ts .* [0.1, 0.2, 0.3,0.33,0.35,0.4];
 
 qpsk_mod = comm.QPSKModulator('PhaseOffset',0,'BitInput',1);
 qpsk_demod = comm.QPSKDemodulator('PhaseOffset',0,'BitOutput',1);
@@ -31,7 +31,7 @@ delay = dsp.VariableFractionalDelay;
 
 syncTemp = comm.SymbolSynchronizer('SamplesPerSymbol',Fse,'TimingErrorDetector','Gardner (non-data-aided)', 'DampingFactor', 0.707, 'NormalizedLoopBandwidth', 0.005, 'DetectorGain', 1);
 
-eb_n0_dB = 1:1:10; % rapport signal sur bruit en dB
+eb_n0_dB = 100;%1:1:10; % rapport signal sur bruit en dB
 eb_n0 = 10.^(eb_n0_dB/10);
 sig = 1; % variance du signal
 Eg = 1; % energie du filtre
@@ -51,9 +51,10 @@ for toto = 1:length(tau)
             r0 = 1;
             buffer_bk  = [];
             buffer_bkr = [];
-            p = 1;
-            for z = 1:3
-                while nbr_err < 100
+            %p = 1;
+            %while nbr_err < 100
+                for p = 1:3
+                
                 
                 %% Emetteur
                 
@@ -95,27 +96,25 @@ for toto = 1:length(tau)
                     dnr(n) = rn(n) * conj(rn(n-1));
                 end
                 r0 = rn(end);
-                figure(1)
+                figure(1);
                 plot(dnr, '*');
-                title(num2str(z))
+                xlim([-5 5]);
+                ylim([-5 5]);
+                title(['d_n (reception), iteration : ',num2str(p)]);
+                xlabel('I');
+                ylabel('Q');
                 drawnow limitrate
 
                 anr = qpsk_demod.step(dnr);
                 bkr = anr;
-                %buffer_bkr = [buffer_bkr;bkr];
-                %buffer_bk  = [buffer_bk ;bk];
-                if p > 2 %length(buffer_bk) >= k && length(buffer_bkr) >= k
-                    %bk_ = buffer_bk(1:k);
-                    %bkr_ = buffer_bkr(1:k);
-                    % buffer_bk(1:k) = [];
-                    % buffer_bkr(1:k) = [];
+                
+                if p > 2 
                     error_cnt = calculError.step( bk, bkr );
                     nbr_err = error_cnt(2);
                 end
-                p = p+1;
                 
                 end
-            end
+            %end
             
             TEB(foo, toto) = error_cnt(1)
             
@@ -124,6 +123,8 @@ for toto = 1:length(tau)
     end
     
     figure;
+    xlim([-5 5])
+    ylim([-5 5])
     plot(rn, '*');
     hold on
     plot(an, 'r*');
@@ -131,8 +132,7 @@ for toto = 1:length(tau)
     legend({'dnr', 'an'},'location','southwest');
     xlabel('I')
     ylabel('Q')
-    xlim([-2 2])
-    ylim([-2 2])
+    
 end
 
 
@@ -168,18 +168,18 @@ end
 % xlim([-1.5 1.5])
 % ylim([-1.5 1.5])
 
-% figure;
-% pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered')
-% title('Densité de puissance de sl')
+figure;
+pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered')
+title('Densité de puissance de sl')
 
-% [pw, fpw] = pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered'); % diagramme de welch avec Nfft points et pas de recouvrement entre deux fenetres
-% [Ga, f] = ga.freqz(Nfft,'whole',Fe); %
-% figure('Name', 'Périodogramme de Welch et DSP théorique de sl(t)');
-% plot(fpw,10*log10(abs(pw)),f-1000000, 10*log10(fftshift(abs(Ga)))-67,'g');
-% xlabel('fréquence en Hz');
-% ylabel('dB / (rad/sample)');
-% legend({'Périodogramme de Welch','DSP théorique'},'Location','southwest');
-% title('Périodogramme de Welch et DSP théorique de sl(t)');
+[pw, fpw] = pwelch(sl_in, hanning(Nfft), 0, Nfft, Fe, 'centered'); % diagramme de welch avec Nfft points et pas de recouvrement entre deux fenetres
+[Ga, f] = ga.freqz(Nfft,'whole',Fe); %
+figure('Name', 'Périodogramme de Welch et DSP théorique de sl(t)');
+plot(fpw,10*log10(abs(pw)),f-1000000, 10*log10(fftshift(abs(Ga)))-67,'g');
+xlabel('fréquence en Hz');
+ylabel('dB / (rad/sample)');
+legend({'Périodogramme de Welch','DSP théorique'},'Location','southwest');
+title('Périodogramme de Welch et DSP théorique de sl(t)');
 
 
 figure('Name', 'évolution du TEB en fonction de Eb/N0 en dB, avec plusieur valeurs de \Delta_f');
